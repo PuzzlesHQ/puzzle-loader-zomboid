@@ -37,6 +37,24 @@ dependencies {
     implementation "com.github.PuzzlesHQ:puzzle-loader-core:1.0.1-alpha:common"
 }
 
+if (!file("$projectDir/run").exists()) {
+    file("$projectDir/run").mkdirs();
+}
+
+tasks.register("runClient", JavaExec) {
+    classpath += sourceSets.main.runtimeClasspath
+
+    mainClass = "dev.puzzleshq.puzzleloader.loader.launch.pieces.ClientPiece"
+    workingDir(file("$projectDir/run"))
+}
+
+tasks.register("runServer", JavaExec) {
+    classpath += sourceSets.main.runtimeClasspath
+
+    mainClass = "dev.puzzleshq.puzzleloader.loader.launch.pieces.ServerPiece"
+    workingDir(file("$projectDir/run"))
+}
+
 processResources {
     def projectProperties = [
             "p_name": p_name,
