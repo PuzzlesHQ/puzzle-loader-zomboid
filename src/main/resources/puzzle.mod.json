@@ -1,0 +1,30 @@
+{
+  "formatVersion": 1,
+  "id": "${mod_id}",
+  "version": "${mod_version}",
+  "name": "${mod_name}",
+  "description": "${mod_desc}",
+  "authors": [
+    "zombi2"
+  ],
+  "meta": {
+    "icon": "puzzle-loader-zomboid:icons/icon.png"
+  },
+  "entrypoints": {
+    "preLaunch": "dev.puzzleshq.puzzleloader.zomboid.PrePuzzleZomboid",
+
+    "preInit": "dev.puzzleshq.puzzleloader.zomboid.PuzzleZomboid",
+    "init": "dev.puzzleshq.puzzleloader.zomboid.PuzzleZomboid",
+    "postInit": "dev.puzzleshq.puzzleloader.zomboid.PuzzleZomboid"
+  },
+  "mixins": [
+    "puzzle-loader-zomboid.mixins.json"
+  ],
+  "depends": {
+    "project-zomboid": ">=41.78.16",
+    "puzzle-loader-core": ">=1.0.0-alpha"
+  },
+  "accessTransformers": [
+    "puzzle-loader-zomboid.manipulator"
+  ]
+}

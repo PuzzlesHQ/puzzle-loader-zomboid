@@ -1,1 +1,13 @@
+buildscript {
+    repositories {
+        maven {
+            name "JitPack"
+            url "https://jitpack.io"
+        }
+        mavenCentral()
+        gradlePluginPortal()
+        mavenLocal()
+    }
+}
+
 rootProject.name = p_id
