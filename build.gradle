@@ -1,0 +1,113 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+    id("io.github.sgtsilvio.gradle.maven-central-publishing") version "0.4.0"
+}
+
+def ref = System.getenv("GITHUB_REF")
+
+group = p_group
+version = (ref != null && ref.startsWith("refs/tags/")) ? ref.tokenize('/').last().replaceFirst(/^v/, '') : p_version
+
+String mavenUrl = System.getenv("MAVEN_URL")
+
+String envRepo = System.getenv("MAVEN_REPO");
+String mavenRepo = envRepo != null ? envRepo : "releases";
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+
+    sourceCompatibility = '17'
+    targetCompatibility = '17'
+}
+
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "org.jetbrains:annotations:24.0.0"
+    implementation "dev.puzzleshq:puzzle-annotations:1.0.0"
+}
+
+processResources {
+    def projectProperties = [
+            "p_name": p_name,
+            "p_version": ((String)version).contains(".") ? version : "0.0.0",
+            "p_desc": p_desc,
+
+            "p_id": p_id,
+            "p_group": p_group,
+
+            "p_git": p_git
+    ]
+
+    inputs.properties projectProperties
+
+    filesMatching(["puzzle_project.json"]) {
+        expand projectProperties
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "PuzzleHQsMaven"
+            url = mavenUrl+ "/" +mavenRepo
+            credentials {
+                username = System.getenv("MAVEN_NAME")
+                password = System.getenv("MAVEN_SECRET")
+            }
+            authentication {
+                basic(BasicAuthentication)
+            }
+        }
+    }
+
+    publications {
+        maven(MavenPublication) {
+            groupId = p_group
+            artifactId = p_id
+            version = this.version
+
+            from components.java
+
+            pom {
+                name = p_name
+                description = p_desc
+                url = p_git
+
+                licenses {
+                    license {
+                        name = "GNU Lesser General Public License"
+                        url = "https://www.gnu.org/licenses/lgpl-2.1.html"
+                        distribution = "LGPL"
+                        comments = "This project includes LGPL-licensed components."
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = 'mrzombii'
+                        name = 'Mr Zombii'
+                        email = 'thezombiigames@gmail.com'
+                    }
+                }
+                scm {
+                    connection = "${p_git}.git"
+                    developerConnection = "${p_git}.git"
+                    url = "${p_git}.git"
+                }
+            }
+        }
+    }
+}
+
+if (ref != null) {
+    signing {
+        useGpgCmd()
+        sign(publishing.publications[0])
+    }
+}
