@@ -4,8 +4,6 @@
   "package": "dev.puzzleshq.puzzleloader.zomboid.mixins",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "MixinGameClient",
-    "MixinRakNetPeerInterface"
   ],
   "injectors": {
     "defaultRequire": 1
