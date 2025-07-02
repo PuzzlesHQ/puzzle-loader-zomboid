@@ -216,7 +216,7 @@ publishing {
                         // noinspection all
                         name = "GNU Lesser General Public License"
                         // noinspection all
-                        url = "https://www.gnu.org/licenses/lgpl-2.1.html"
+                        url = "https://www.gnu.org/licenses/lgpl-3.0.html"
                         // noinspection all
                         distribution = "LGPL"
                         // noinspection all
