@@ -1,5 +1,6 @@
 import dev.puzzleshq.mod.ModFormats
 import dev.puzzleshq.mod.info.ModInfoBuilder
+import groovy.json.JsonSlurper
 import org.hjson.JsonObject
 
 import java.nio.file.Path
@@ -19,8 +20,8 @@ version = (ref != null && ref.startsWith("refs/tags/")) ? ref.tokenize('/').last
 
 String mavenUrl = System.getenv("MAVEN_URL")
 
-String envRepo = System.getenv("MAVEN_REPO")
-String mavenRepo = envRepo != null ? envRepo : "releases"
+String envRepo = System.getenv("MAVEN_REPO");
+String mavenRepo = envRepo != null ? envRepo : "releases";
 
 java {
     withJavadocJar()
@@ -42,42 +43,44 @@ dependencies {
 //    compileOnly(files("$projectDir/build/projectZomboid.jar"))
 
     implementation "com.github.PuzzlesHQ:puzzle-loader-core:1.0.1-alpha:client"
-    implementation "com.github.PuzzlesHQ:puzzle-loader-core:1.0.1-alpha:common"
+    implementation "com.github.PuzzlesHQ:puzzle-loader-core:1.0.1-alpha:common";
 
 //    implementation "dev.puzzleshq:puzzle-loader-core:69.69.69:client"
-//    implementation "dev.puzzleshq:puzzle-loader-core:69.69.69:common"
+//    implementation "dev.puzzleshq:puzzle-loader-core:69.69.69:common";
 
-    implementation "org.ow2.asm:asm:$asm_version"
-    implementation "org.ow2.asm:asm-tree:$asm_version"
-    implementation "org.ow2.asm:asm-util:$asm_version"
-    implementation "org.ow2.asm:asm-analysis:$asm_version"
-    implementation "org.ow2.asm:asm-commons:$asm_version"
+    {
+        implementation "org.ow2.asm:asm:$asm_version"
+        implementation "org.ow2.asm:asm-tree:$asm_version"
+        implementation "org.ow2.asm:asm-util:$asm_version"
+        implementation "org.ow2.asm:asm-analysis:$asm_version"
+        implementation "org.ow2.asm:asm-commons:$asm_version"
 
-    implementation "dev.puzzleshq:puzzle-annotations:1.0.0"
-    implementation "dev.puzzleshq:access-writer:1.0.4+c"
-    implementation "dev.puzzleshq:mod-format-framework:1.0.0"
+        implementation "dev.puzzleshq:puzzle-annotations:1.0.0"
+        implementation "dev.puzzleshq:access-writer:1.0.4+c"
+        implementation "dev.puzzleshq:mod-format-framework:1.0.0"
 
-    implementation "org.hjson:hjson:$hjson_version"
+        implementation "org.hjson:hjson:$hjson_version"
 
-    implementation "org.reflections:reflections:$reflections_version"
-    implementation("net.neoforged:bus:$eventbus_version") {
-        exclude group: "org.apache.logging.log4j", module: "log4j-api"
+        implementation "org.reflections:reflections:$reflections_version"
+        implementation("net.neoforged:bus:$eventbus_version") {
+            exclude group: "org.apache.logging.log4j", module: "log4j-api"
+        }
+
+        implementation annotationProcessor("io.github.llamalad7:mixinextras-fabric:$mixin_extras_version")
+        implementation("net.fabricmc:sponge-mixin:$mixin_version") {
+            exclude group: "com.google.code.gson", module: "gson"
+            exclude group: "com.google.guava", module: "guava"
+        }
+        implementation "net.sf.jopt-simple:jopt-simple:$jopt_simple_version"
+
+        implementation "com.github.zafarkhaja:java-semver:0.10.2"
+
+        implementation 'org.slf4j:slf4j-ext:1.7.23'
+        implementation 'org.slf4j:slf4j-api:1.7.23'
+        implementation "org.apache.logging.log4j:log4j-api:$slf4j_version"
+        implementation "org.apache.logging.log4j:log4j-core:$slf4j_version"
+        implementation "org.apache.logging.log4j:log4j-slf4j-impl:$slf4j_version"
     }
-
-    implementation annotationProcessor("io.github.llamalad7:mixinextras-fabric:$mixin_extras_version")
-    implementation("net.fabricmc:sponge-mixin:$mixin_version") {
-        exclude group: "com.google.code.gson", module: "gson"
-        exclude group: "com.google.guava", module: "guava"
-    }
-    implementation "net.sf.jopt-simple:jopt-simple:$jopt_simple_version"
-
-    implementation "com.github.zafarkhaja:java-semver:0.10.2"
-
-    implementation 'org.slf4j:slf4j-ext:1.8.0-beta4'
-    implementation 'org.slf4j:slf4j-api:1.8.0-beta4'
-    implementation "org.apache.logging.log4j:log4j-api:$slf4j_version"
-    implementation "org.apache.logging.log4j:log4j-core:$slf4j_version"
-    implementation "org.apache.logging.log4j:log4j-slf4j-impl:$slf4j_version"
 }
 
 def projectZomboidAppId = 108600
@@ -89,45 +92,49 @@ def convertToJar(File dir) {
     File f = new File("$projectDir/build/projectZomboid.jar")
     if (f.exists()) {
         project.dependencies.compileOnly(files(f.absolutePath))
-        return
+        return;
     }
 
-    f.createNewFile()
+    f.createNewFile();
     System.out.println(f)
 
     ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(f))
     recurse(stream, "", dir)
-    stream.close()
+    stream.close();
 
     project.dependencies.compileOnly(files(f.absolutePath))
 }
 
 def recurse(ZipOutputStream file, String parent, File d) {
+    List<String> exclude = List.of("win", "win64", "jre", "jre64", "launcher", "license", "mods", "pmods", "Workshop")
     if (d.isDirectory()) {
         for (final def f in d.listFiles()) {
+//            if (exclude.contains(f.name)) continue;
+//            if (f.name.contains(".dll") || f.name.contains(".jar") || f.name.contains(".bat") || f.name.contains(".exe")) continue;
             if (f.isDirectory()) {
-                recurse(file, (parent.isEmpty() ? "" : (parent + "/")) + f.getName(), f)
+                recurse(file, (parent.isEmpty() ? "" : (parent + "/")) + f.getName(), f);
             } else {
-                if (!f.name.contains(".class")) continue
+                if (!f.name.contains(".class")) continue;
                 System.out.println(f)
                 file.putNextEntry(new ZipEntry((parent.isEmpty() ? "" : (parent + "/")) + f.getName()))
-                FileInputStream fis = new FileInputStream(f)
+                FileInputStream fis = new FileInputStream(f);
                 file.write(fis.readAllBytes())
                 fis.close()
             }
         }
-        return
+        return;
     }
     file.putNextEntry(new ZipEntry((parent.isEmpty() ? "" : (parent + "/")) + d.getName()))
-    FileInputStream fis = new FileInputStream(d)
+    FileInputStream fis = new FileInputStream(d);
     file.write(fis.readAllBytes())
     fis.close()
 }
 
 def json = new JsonSlurper().parse(Path.of(projectZomboidPath.toAbsolutePath().toString(), "ProjectZomboid64.json"))
 
-if (!file("$projectDir/run").exists())
-    file("$projectDir/run").mkdirs()
+if (!file("$projectDir/run").exists()) {
+    file("$projectDir/run").mkdirs();
+}
 
 tasks.register("runClient", JavaExec) {
     classpath += sourceSets.main.runtimeClasspath
@@ -191,19 +198,17 @@ publishing {
                 password = System.getenv("MAVEN_SECRET")
             }
             authentication {
-                // noinspection all
                 basic(BasicAuthentication)
             }
         }
     }
 
     publications {
-        // noinspection all
         maven(MavenPublication) {
             groupId = p_group
             artifactId = p_id
+            version = this.version
 
-            // noinspection all
             from components.java
 
             pom {
@@ -213,33 +218,23 @@ publishing {
 
                 licenses {
                     license {
-                        // noinspection all
                         name = "GNU Lesser General Public License"
-                        // noinspection all
-                        url = "https://www.gnu.org/licenses/lgpl-3.0.html"
-                        // noinspection all
+                        url = "https://www.gnu.org/licenses/lgpl-2.1.html"
                         distribution = "LGPL"
-                        // noinspection all
                         comments = "This project includes LGPL-licensed components."
                     }
                 }
 
                 developers {
                     developer {
-                        // noinspection all
                         id = 'mrzombii'
-                        // noinspection all
                         name = 'Mr Zombii'
-                        // noinspection all
                         email = 'thezombiigames@gmail.com'
                     }
                 }
                 scm {
-                    // noinspection all
                     connection = "${p_git}.git"
-                    // noinspection all
                     developerConnection = "${p_git}.git"
-                    // noinspection all
                     url = "${p_git}.git"
                 }
             }
@@ -262,7 +257,7 @@ String str = new String(bytes)
 AccessWriters.init(null)
 AccessWriters.MERGED.add(AccessWriters.getFormat("manipulator").parse(str))
 
-ModFormats.initDefaultFormats()
+ModFormats.initDefaultFormats();
 
 
 import dev.puzzleshq.accesswriter.AccessWriters
@@ -270,63 +265,65 @@ import dev.puzzleshq.buildsrc.SteamAppLocator
 import groovy.json.JsonSlurper
 import me.lucko.jarrelocator.JarRelocator
 import me.lucko.jarrelocator.Relocation
-import static org.gradle.api.artifacts.transform.TransformParameters.None
+import dev.puzzleshq.buildsrc.GenericTransformer
+import org.gradle.api.artifacts.transform.TransformParameters
 
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
-import java.util.zip.ZipOutputStream
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream;
 
-abstract class MyTransform implements TransformAction<None> {
+abstract class MyTransform implements TransformAction<TransformParameters.None> {
 
     @InputArtifact
-    abstract Provider<FileSystemLocation> getInputArtifact()
+    abstract Provider<FileSystemLocation> getInputArtifact();
 
-    @SuppressWarnings("unused")
+    @Override
     void transform(TransformOutputs outputs) {
-        var inp = inputArtifact.get().asFile
-        var out = outputs.file(inp.name.replace(".jar", "-transformed.jar"))
+        var inp = inputArtifact.get().asFile;
+        var out = outputs.file(inp.name.replace(".jar", "-transformed.jar"));
 
-        List<Relocation> rules = new ArrayList<>()
-//        rules.add(new Relocation("org.objectweb", "bundled.org.objectweb"))
-//        rules.add(new Relocation("org.spongepowered.include", "bundled"))
+        List<Relocation> rules = new ArrayList<>();
+//        rules.add(new Relocation("org.objectweb", "bundled.org.objectweb"));
+//        rules.add(new Relocation("org.spongepowered.include", "bundled"));
 
-        JarRelocator relocator = new JarRelocator(inp, out, rules)
-        relocator.run()
+        JarRelocator relocator = new JarRelocator(inp, out, rules);
+        relocator.run();
 
         GenericTransformer.transform(out)
     }
 }
 
-abstract class MyTransformChecker implements TransformAction<None> {
+abstract class MyTransformChecker implements TransformAction<TransformParameters.None> {
 
     @InputArtifact
-    abstract Provider<FileSystemLocation> getInputArtifact()
+    abstract Provider<FileSystemLocation> getInputArtifact();
 
-    @SuppressWarnings("unused")
+    @Override
     void transform(TransformOutputs outputs) {
-        var inp = inputArtifact.get().asFile
-        var out = outputs.file(inp.name.replace(".jar", "-checked.jar"))
+        var inp = inputArtifact.get().asFile;
+        var out = outputs.file(inp.name.replace(".jar", "-checked.jar"));
 
         ZipFile stream = new ZipFile(inp)
 
         if (stream.getEntry("puzzle-loader-core.manipulator") != null) {
-            InputStream stream1 = stream.getInputStream(stream.getEntry("puzzle-loader-core.manipulator"))
-            String str = new String(stream1.readAllBytes())
+            InputStream stream1 = stream.getInputStream(stream.getEntry("puzzle-loader-core.manipulator"));
+            String str = new String(stream1.readAllBytes());
             stream1.close()
 
             AccessWriters.MERGED.add(AccessWriters.getFormat("manipulator").parse(str))
         }
 
         if (stream.getEntry("puzzle.mod.json") != null) {
-            InputStream stream1 = stream.getInputStream(stream.getEntry("puzzle.mod.json"))
-            String str = new String(stream1.readAllBytes())
+            InputStream stream1 = stream.getInputStream(stream.getEntry("puzzle.mod.json"));
+            String str = new String(stream1.readAllBytes());
             stream1.close()
 
-            ModInfoBuilder builder = new ModInfoBuilder()
-            ModFormats.getFormat(3).parse(builder, JsonObject.readHjson(str).asObject())
+            ModInfoBuilder builder = new ModInfoBuilder();
+            ModFormats.getFormat(3).parse(builder, JsonObject.readHjson(str))
             builder.getAccessWriters().forEach {
-                InputStream stream2 = stream.getInputStream(stream.getEntry(it))
-                String str2 = new String(stream2.readAllBytes())
+                InputStream stream2 = stream.getInputStream(stream.getEntry(it));
+                String str2 = new String(stream2.readAllBytes());
                 stream2.close()
 
                 AccessWriters.MERGED.add(AccessWriters.getFormat(it).parse(str2))
@@ -336,31 +333,31 @@ abstract class MyTransformChecker implements TransformAction<None> {
         out.setBytes(inp.readBytes())
     }
 }
-Attribute<Boolean> checking = Attribute.of("checking", Boolean.class)
-Attribute<Boolean> manipulated = Attribute.of("manipulated", Boolean.class)
+Attribute<Boolean> checking = Attribute.of("checking", Boolean.class);
+Attribute<Boolean> manipulated = Attribute.of("manipulated", Boolean.class);
 
 afterEvaluate {
-    project.getDependencies().getAttributesSchema().attribute(checking)
-    project.getDependencies().getAttributesSchema().attribute(manipulated)
-    project.getDependencies().getArtifactTypes().named("jar", artifact -> {
-        artifact.getAttributes().attribute(manipulated, false).attribute(checking, false)
-    })
+    project.getDependencies().getAttributesSchema().attribute(checking);
+    project.getDependencies().getAttributesSchema().attribute(manipulated);
+    project.getDependencies().getArtifactTypes().getByName("jar", artifact -> {
+        artifact.getAttributes().attribute(manipulated, false).attribute(checking, false);
+    });
 
     project.getDependencies().registerTransform(MyTransformChecker) {
-        getFrom().attribute(checking, false)
-        getTo().attribute(checking, true)
+        getFrom().attribute(checking, false);
+        getTo().attribute(checking, true);
     }
 
     project.getDependencies().registerTransform(MyTransform) {
-        getFrom().attribute(manipulated, false)
-        getTo().attribute(manipulated, true)
+        getFrom().attribute(manipulated, false);
+        getTo().attribute(manipulated, true);
     }
 
-    project.getConfigurations().configureEach(config -> {
+    project.getConfigurations().all(config -> {
         if (config.isCanBeResolved()) {
-            config.getAttributes().attribute(manipulated, true)
-            config.getAttributes().attribute(checking, true)
+            config.getAttributes().attribute(manipulated, true);
+            config.getAttributes().attribute(checking, true);
         }
-    })
+    });
 
 }

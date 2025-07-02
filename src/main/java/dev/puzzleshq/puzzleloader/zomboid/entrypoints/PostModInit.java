@@ -2,17 +2,17 @@ package dev.puzzleshq.puzzleloader.zomboid.entrypoints;
 
 import dev.puzzleshq.puzzleloader.loader.util.PuzzleEntrypointUtil;
 
-public interface ModInit {
+public interface PostModInit {
 
     String ENTRYPOINT_KEY = "init";
 
-    void onInit();
+    void onPostInit();
 
     static void invoke() {
         PuzzleEntrypointUtil.invoke(
                 ENTRYPOINT_KEY,
-                ModInit.class,
-                ModInit::onInit
+                PostModInit.class,
+                PostModInit::onPostInit
         );
     }
 
