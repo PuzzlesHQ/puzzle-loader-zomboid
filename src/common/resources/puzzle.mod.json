@@ -1,0 +1,46 @@
+{
+  "formatVersion": 3,
+  "display-name": "${p_name}",
+  "id": "${p_id}",
+  "version": "${p_version}",
+  "description": "${p_desc}",
+  "authors": [
+    "Mr-Zombii", "zombi2"
+  ],
+  "can-load-on": {
+    "client": true,
+    "server": true
+  },
+  "meta": {
+    "icon": "p_id:icons/icon.png"
+  },
+  "entrypoints": {
+    "preLaunch": "dev.puzzleshq.puzzleloader.zomboid.PrePuzzleZomboid",
+
+    "client-preInit": "dev.puzzleshq.puzzleloader.zomboid.ClientPuzzleZomboid",
+    "client-init": "dev.puzzleshq.puzzleloader.zomboid.ClientPuzzleZomboid",
+    "client-postInit": "dev.puzzleshq.puzzleloader.zomboid.ClientPuzzleZomboid",
+
+    "preInit": "dev.puzzleshq.puzzleloader.zomboid.PuzzleZomboid",
+    "init": "dev.puzzleshq.puzzleloader.zomboid.PuzzleZomboid",
+    "postInit": "dev.puzzleshq.puzzleloader.zomboid.PuzzleZomboid"
+  },
+  "mixins": [
+    "mixins/puzzle-loader-zomboid.common.mixins.json",
+    {
+      "config": "mixins/puzzle-loader-zomboid.client.mixins.json",
+      "environment": "client"
+    },
+    {
+      "config": "mixins/puzzle-loader-zomboid.server.mixins.json",
+      "environment": "server"
+    }
+  ],
+  "depends": {
+    "project-zomboid": ">=41.78.16",
+    "puzzle-loader-core": ">=1.0.0"
+  },
+  "access-writers": [
+    "puzzle-loader-zomboid.manipulator"
+  ]
+}

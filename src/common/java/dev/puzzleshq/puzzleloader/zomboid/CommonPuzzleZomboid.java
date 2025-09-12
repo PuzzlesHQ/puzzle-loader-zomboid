@@ -4,10 +4,15 @@ import dev.puzzleshq.puzzleloader.zomboid.entrypoints.ModInit;
 import dev.puzzleshq.puzzleloader.zomboid.entrypoints.PostModInit;
 import dev.puzzleshq.puzzleloader.zomboid.entrypoints.PreModInit;
 
-public class PuzzleZomboid implements PreModInit, ModInit, PostModInit {
+public class CommonPuzzleZomboid implements PreModInit, ModInit, PostModInit {
+
+    @Override
+    public void onPreInit() {
+        System.out.println("CommonPuzzleZomboid");
+    }
+
     @Override
     public void onInit() {
-
     }
 
     @Override
@@ -15,8 +20,4 @@ public class PuzzleZomboid implements PreModInit, ModInit, PostModInit {
 
     }
 
-    @Override
-    public void onPreInit() {
-
-    }
 }

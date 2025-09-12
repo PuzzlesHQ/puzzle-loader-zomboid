@@ -2,7 +2,11 @@
 build/
 .idea/
 
+buildSrc/build
+buildSrc/.gradle
+
 gradlew
 gradlew.bat
 
-gradle/wrapper/gradle-wrapper.jar
+.gitignore
+dependencies.json

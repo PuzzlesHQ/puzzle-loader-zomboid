@@ -2,7 +2,7 @@ plugins {
     id 'java'
 }
 
-group = 'com.github.PuzzlesHQ'
+group = 'dev.puzzleshq'
 
 repositories {
     mavenCentral()
@@ -20,10 +20,12 @@ dependencies {
     implementation "dev.puzzleshq:access-writer:1.0.4+c"
     implementation "dev.puzzleshq:mod-format-framework:1.0.0"
     implementation "org.hjson:hjson:3.1.0"
+
+    gradleApi()
 }
 
 wrapper {
-    gradleVersion = "8.5"
+    gradleVersion = "8.14"
     distributionType = Wrapper.DistributionType.ALL
 }
 

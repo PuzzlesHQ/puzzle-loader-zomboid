@@ -1,27 +1,82 @@
-import dev.puzzleshq.mod.ModFormats
-import dev.puzzleshq.mod.info.ModInfoBuilder
 import groovy.json.JsonSlurper
-import org.hjson.JsonObject
+import dev.puzzleshq.buildsrc.DepUtils
+import dev.puzzleshq.buildsrc.WidenerPlugin
+import dev.puzzleshq.buildsrc.SteamAppLocator
+import kotlin.text.Charsets
 
 import java.nio.file.Path
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 plugins {
     id 'java'
     id 'maven-publish'
     id("io.github.sgtsilvio.gradle.maven-central-publishing") version "0.4.0"
+    id 'com.gradleup.shadow' version '8.3.6'
 }
-
-var manipulator = file("$projectDir/src/main/resources/puzzle-loader-zomboid.manipulator")
 
 def ref = System.getenv("GITHUB_REF")
 
 group = p_group
 version = (ref != null && ref.startsWith("refs/tags/")) ? ref.tokenize('/').last().replaceFirst(/^v/, '') : p_version
 
+apply plugin: WidenerPlugin
+
+widenerPlugin {
+    widenerPath.set(file("$projectDir/src/common/resources/puzzle-loader-zomboid.manipulator"))
+}
+group = p_group
+version = (ref != null && ref.startsWith("refs/tags/")) ? ref.tokenize('/').last().replaceFirst(/^v/, '') : p_version
+
+sourceSets {
+    client
+    common
+    server
+}
+
+configurations {
+    allCompileOnly
+
+    clientCompileOnly.extendsFrom(allCompileOnly)
+    commonCompileOnly.extendsFrom(allCompileOnly)
+    serverCompileOnly.extendsFrom(allCompileOnly)
+
+    allImpl
+    clientImplementation.extendsFrom(allImpl)
+    commonImplementation.extendsFrom(allImpl)
+    serverImplementation.extendsFrom(allImpl)
+
+    allImplLoader
+    clientImplementation.extendsFrom(allImplLoader)
+    commonImplementation.extendsFrom(allImplLoader)
+    serverImplementation.extendsFrom(allImplLoader)
+
+    clientBundle
+    commonBundle
+    serverBundle
+
+    clientImplementation.extendsFrom(clientBundle)
+    commonImplementation.extendsFrom(commonBundle)
+    serverImplementation.extendsFrom(serverBundle)
+
+    clientInternal
+    serverInternal
+
+    clientImplementation.extendsFrom(clientInternal)
+    serverImplementation.extendsFrom(serverInternal)
+    serverImplementation.extendsFrom(commonBundle)
+
+}
+
+boolean usePuzzleCoreJitpackRelease = true
+
+String jpVersion = "d367f44256"
+String centralVersion = "1.0.12-alpha"
+
 String mavenUrl = System.getenv("MAVEN_URL")
 
-String envRepo = System.getenv("MAVEN_REPO");
-String mavenRepo = envRepo != null ? envRepo : "releases";
+String envRepo = System.getenv("MAVEN_REPO")
+String mavenRepo = envRepo != null ? envRepo : "releases"
 
 java {
     withJavadocJar()
@@ -38,49 +93,57 @@ repositories {
 }
 
 dependencies {
-    implementation "org.jetbrains:annotations:24.0.0"
-    implementation "dev.puzzleshq:puzzle-annotations:1.0.0"
-//    compileOnly(files("$projectDir/build/projectZomboid.jar"))
+    clientCompileOnly "dev.puzzleshq:puzzle-annotations:1.0.0"
+    serverCompileOnly "dev.puzzleshq:puzzle-annotations:1.0.0"
+    commonCompileOnly "dev.puzzleshq:puzzle-annotations:1.0.0"
 
-    implementation "com.github.PuzzlesHQ:puzzle-loader-core:1.0.1-alpha:client"
-    implementation "com.github.PuzzlesHQ:puzzle-loader-core:1.0.1-alpha:common";
+    clientCompileOnly "org.jetbrains:annotations:24.0.0"
+    serverCompileOnly "org.jetbrains:annotations:24.0.0"
+    commonCompileOnly "org.jetbrains:annotations:24.0.0"
 
-//    implementation "dev.puzzleshq:puzzle-loader-core:69.69.69:client"
-//    implementation "dev.puzzleshq:puzzle-loader-core:69.69.69:common";
-
-    {
-        implementation "org.ow2.asm:asm:$asm_version"
-        implementation "org.ow2.asm:asm-tree:$asm_version"
-        implementation "org.ow2.asm:asm-util:$asm_version"
-        implementation "org.ow2.asm:asm-analysis:$asm_version"
-        implementation "org.ow2.asm:asm-commons:$asm_version"
-
-        implementation "dev.puzzleshq:puzzle-annotations:1.0.0"
-        implementation "dev.puzzleshq:access-writer:1.0.4+c"
-        implementation "dev.puzzleshq:mod-format-framework:1.0.0"
-
-        implementation "org.hjson:hjson:$hjson_version"
-
-        implementation "org.reflections:reflections:$reflections_version"
-        implementation("net.neoforged:bus:$eventbus_version") {
-            exclude group: "org.apache.logging.log4j", module: "log4j-api"
-        }
-
-        implementation annotationProcessor("io.github.llamalad7:mixinextras-fabric:$mixin_extras_version")
-        implementation("net.fabricmc:sponge-mixin:$mixin_version") {
-            exclude group: "com.google.code.gson", module: "gson"
-            exclude group: "com.google.guava", module: "guava"
-        }
-        implementation "net.sf.jopt-simple:jopt-simple:$jopt_simple_version"
-
-        implementation "com.github.zafarkhaja:java-semver:0.10.2"
-
-        implementation 'org.slf4j:slf4j-ext:1.7.23'
-        implementation 'org.slf4j:slf4j-api:1.7.23'
-        implementation "org.apache.logging.log4j:log4j-api:$slf4j_version"
-        implementation "org.apache.logging.log4j:log4j-core:$slf4j_version"
-        implementation "org.apache.logging.log4j:log4j-slf4j-impl:$slf4j_version"
+    if (usePuzzleCoreJitpackRelease) {
+        clientBundle "com.github.PuzzlesHQ:puzzle-loader-core:$jpVersion:client"
+        allImpl("com.github.PuzzlesHQ:puzzle-loader-core:$jpVersion:common")
+    } else {
+        clientBundle "dev.puzzleshq:puzzle-loader-core:$centralVersion:client"
+        allImpl("dev.puzzleshq:puzzle-loader-core:$centralVersion:common")
     }
+
+    clientImplementation(sourceSets.common.output)
+    serverImplementation(sourceSets.common.output)
+
+    // loader dependencies
+    allImplLoader "org.ow2.asm:asm:$asm_version"
+    allImplLoader "org.ow2.asm:asm-tree:$asm_version"
+    allImplLoader "org.ow2.asm:asm-util:$asm_version"
+    allImplLoader "org.ow2.asm:asm-analysis:$asm_version"
+    allImplLoader "org.ow2.asm:asm-commons:$asm_version"
+
+    allImplLoader "dev.puzzleshq:puzzle-annotations:1.0.0"
+    allImplLoader "dev.puzzleshq:access-writer:1.0.4+c"
+    allImplLoader "dev.puzzleshq:mod-format-framework:1.1.1"
+
+    allImplLoader "org.hjson:hjson:$hjson_version"
+
+    allImplLoader "org.reflections:reflections:$reflections_version"
+    allImplLoader("net.neoforged:bus:$eventbus_version") {
+        exclude group: "org.apache.logging.log4j", module: "log4j-api"
+    }
+
+    allImplLoader annotationProcessor("io.github.llamalad7:mixinextras-fabric:$mixin_extras_version")
+    allImplLoader("net.fabricmc:sponge-mixin:$mixin_version") {
+        exclude group: "com.google.code.gson", module: "gson"
+        exclude group: "com.google.guava", module: "guava"
+    }
+    allImplLoader "net.sf.jopt-simple:jopt-simple:$jopt_simple_version"
+
+    commonBundle "com.github.villadora:semver:0.0.3"
+
+    allImplLoader 'org.slf4j:slf4j-ext:1.7.23'
+    allImplLoader 'org.slf4j:slf4j-api:1.7.23'
+    allImplLoader "org.apache.logging.log4j:log4j-api:$slf4j_version"
+    allImplLoader "org.apache.logging.log4j:log4j-core:$slf4j_version"
+    allImplLoader "org.apache.logging.log4j:log4j-slf4j-impl:$slf4j_version"
 }
 
 def projectZomboidAppId = 108600
@@ -91,18 +154,24 @@ convertToJar(new File(projectZomboidPath.toString()))
 def convertToJar(File dir) {
     File f = new File("$projectDir/build/projectZomboid.jar")
     if (f.exists()) {
-        project.dependencies.compileOnly(files(f.absolutePath))
+        project.dependencies.clientImplementation(files(f.absolutePath))
+        project.dependencies.commonImplementation(files(f.absolutePath))
+        project.dependencies.serverImplementation(files(f.absolutePath))
         return;
     }
 
-    f.createNewFile();
-    System.out.println(f)
+    f.createNewFile()
 
     ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(f))
-    recurse(stream, "", dir)
-    stream.close();
+    stream.putNextEntry(new ZipEntry("META-INF/MANIFEST.MF"))
+    stream.write("Manifest-Version: 1.0\n".getBytes(Charsets.UTF_8))
 
-    project.dependencies.compileOnly(files(f.absolutePath))
+    recurse(stream, "", dir)
+    stream.close()
+
+    project.dependencies.clientImplementation(files(f.absolutePath))
+    project.dependencies.commonImplementation(files(f.absolutePath))
+    project.dependencies.serverImplementation(files(f.absolutePath))
 }
 
 def recurse(ZipOutputStream file, String parent, File d) {
@@ -131,36 +200,83 @@ def recurse(ZipOutputStream file, String parent, File d) {
 }
 
 def json = new JsonSlurper().parse(Path.of(projectZomboidPath.toAbsolutePath().toString(), "ProjectZomboid64.json"))
+for (final String file in json.classpath) {
+    if (file == ".") continue
 
-if (!file("$projectDir/run").exists()) {
-    file("$projectDir/run").mkdirs();
+    Path path = projectZomboidPath.toAbsolutePath().resolve(file);
+
+    project.dependencies.clientImplementation(files(path.toAbsolutePath()))
+    project.dependencies.commonImplementation(files(path.toAbsolutePath()))
+    project.dependencies.serverImplementation(files(path.toAbsolutePath()))
+
 }
 
 tasks.register("runClient", JavaExec) {
-    classpath += sourceSets.main.runtimeClasspath
+    classpath += sourceSets.client.runtimeClasspath
+    classpath += sourceSets.common.runtimeClasspath
     jvmArgs = json.vmArgs
-
-    classpath += files(projectZomboidPath)
-    classpath += files(json.classpath.collect {
-        new File(Path.of(projectZomboidPath.toAbsolutePath().toString(), it.toString()).toString())
-    })
 
     mainClass = "dev.puzzleshq.puzzleloader.loader.launch.pieces.ClientPiece"
     workingDir(projectZomboidPath)
 }
 
 tasks.register("runServer", JavaExec) {
-    classpath += sourceSets.main.runtimeClasspath
+    classpath += sourceSets.server.runtimeClasspath
+    classpath += sourceSets.common.runtimeClasspath
     jvmArgs = json.vmArgs
 
     mainClass = "dev.puzzleshq.puzzleloader.loader.launch.pieces.ServerPiece"
     workingDir(projectZomboidPath)
 }
 
-processResources {
+java {
+    withJavadocJar()
+    withSourcesJar()
+
+    sourceCompatibility = '17'
+    targetCompatibility = '17'
+}
+
+tasks.register("buildServerJar", com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+    mergeServiceFiles()
+
+    archiveClassifier = "server"
+    from sourceSets.server.output
+}
+
+tasks.register("buildServerSourcesJar", Jar) {
+    from sourceSets.server.allSource
+    archiveClassifier = "server-sources"
+}
+
+tasks.register("buildClientJar", com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+    mergeServiceFiles()
+
+    archiveClassifier = "client"
+    from sourceSets.client.output
+}
+
+tasks.register("buildClientSourcesJar", Jar) {
+    from sourceSets.client.allSource
+    archiveClassifier = "client-sources"
+}
+
+tasks.register("buildCommonJar", com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+    mergeServiceFiles()
+
+    archiveClassifier = "common"
+    from sourceSets.common.output
+}
+
+tasks.register("buildCommonSourcesJar", Jar) {
+    from sourceSets.common.allSource
+    archiveClassifier = "common-sources"
+}
+
+processCommonResources {
     def projectProperties = [
             "p_name": p_name,
-            "p_version": ((String)version).contains(".") ? version : "0.0.0",
+            "p_version": ((String)version).contains(".") ? version : "69.69.69",
             "p_desc": p_desc,
 
             "p_id": p_id,
@@ -169,21 +285,9 @@ processResources {
             "p_git": p_git
     ]
 
-    def modProperties = [
-            "mod_name": p_name,
-            "mod_version": ((String)version).contains(".") ? version : "0.0.0",
-            "mod_desc": p_desc,
-
-            "mod_id": p_id,
-    ]
-
     inputs.properties projectProperties
 
-    filesMatching(["puzzle.mod.json"]) {
-        expand modProperties
-    }
-
-    filesMatching(["puzzle_project.json"]) {
+    filesMatching(["puzzle_project.json", "puzzle.mod.json"]) {
         expand projectProperties
     }
 }
@@ -231,6 +335,10 @@ publishing {
                         name = 'Mr Zombii'
                         email = 'thezombiigames@gmail.com'
                     }
+                    developer {
+                        id = 'zombi'
+                        name = 'Zombi'
+                    }
                 }
                 scm {
                     connection = "${p_git}.git"
@@ -249,115 +357,65 @@ if (ref != null) {
     }
 }
 
-FileInputStream stream = new FileInputStream(manipulator)
-byte[] bytes = stream.readAllBytes()
-stream.close()
-String str = new String(bytes)
-
-AccessWriters.init(null)
-AccessWriters.MERGED.add(AccessWriters.getFormat("manipulator").parse(str))
-
-ModFormats.initDefaultFormats();
-
-
-import dev.puzzleshq.accesswriter.AccessWriters
-import dev.puzzleshq.buildsrc.SteamAppLocator
-import groovy.json.JsonSlurper
-import me.lucko.jarrelocator.JarRelocator
-import me.lucko.jarrelocator.Relocation
-import dev.puzzleshq.buildsrc.GenericTransformer
-import org.gradle.api.artifacts.transform.TransformParameters
-
-import java.util.zip.ZipEntry
-import java.util.zip.ZipFile
-import java.util.zip.ZipInputStream
-import java.util.zip.ZipOutputStream;
-
-abstract class MyTransform implements TransformAction<TransformParameters.None> {
-
-    @InputArtifact
-    abstract Provider<FileSystemLocation> getInputArtifact();
-
-    @Override
-    void transform(TransformOutputs outputs) {
-        var inp = inputArtifact.get().asFile;
-        var out = outputs.file(inp.name.replace(".jar", "-transformed.jar"));
-
-        List<Relocation> rules = new ArrayList<>();
-//        rules.add(new Relocation("org.objectweb", "bundled.org.objectweb"));
-//        rules.add(new Relocation("org.spongepowered.include", "bundled"));
-
-        JarRelocator relocator = new JarRelocator(inp, out, rules);
-        relocator.run();
-
-        GenericTransformer.transform(out)
-    }
+wrapper {
+    gradleVersion = "8.14"
+    distributionType = Wrapper.DistributionType.ALL
 }
 
-abstract class MyTransformChecker implements TransformAction<TransformParameters.None> {
+tasks.register("mkDeps") {
+    File file = new File("$projectDir/dependencies.json")
 
-    @InputArtifact
-    abstract Provider<FileSystemLocation> getInputArtifact();
+    def repos = "["
 
-    @Override
-    void transform(TransformOutputs outputs) {
-        var inp = inputArtifact.get().asFile;
-        var out = outputs.file(inp.name.replace(".jar", "-checked.jar"));
-
-        ZipFile stream = new ZipFile(inp)
-
-        if (stream.getEntry("puzzle-loader-core.manipulator") != null) {
-            InputStream stream1 = stream.getInputStream(stream.getEntry("puzzle-loader-core.manipulator"));
-            String str = new String(stream1.readAllBytes());
-            stream1.close()
-
-            AccessWriters.MERGED.add(AccessWriters.getFormat("manipulator").parse(str))
+    for (i in 0..<project.repositories.size()) {
+        def dependency = project.repositories[i];
+        if (dependency instanceof MavenArtifactRepository) {
+            repos += """\n\t\t{
+\t\t\t\"name\": \"${dependency.name}\",
+\t\t\t\"url\": \"${dependency.url}\"
+\t\t}""" + (i != project.repositories.size() - 1 ? "," : "")
         }
-
-        if (stream.getEntry("puzzle.mod.json") != null) {
-            InputStream stream1 = stream.getInputStream(stream.getEntry("puzzle.mod.json"));
-            String str = new String(stream1.readAllBytes());
-            stream1.close()
-
-            ModInfoBuilder builder = new ModInfoBuilder();
-            ModFormats.getFormat(3).parse(builder, JsonObject.readHjson(str))
-            builder.getAccessWriters().forEach {
-                InputStream stream2 = stream.getInputStream(stream.getEntry(it));
-                String str2 = new String(stream2.readAllBytes());
-                stream2.close()
-
-                AccessWriters.MERGED.add(AccessWriters.getFormat(it).parse(str2))
-            }
-        }
-
-        out.setBytes(inp.readBytes())
     }
-}
-Attribute<Boolean> checking = Attribute.of("checking", Boolean.class);
-Attribute<Boolean> manipulated = Attribute.of("manipulated", Boolean.class);
+    repos += "\n\t]"
 
-afterEvaluate {
-    project.getDependencies().getAttributesSchema().attribute(checking);
-    project.getDependencies().getAttributesSchema().attribute(manipulated);
-    project.getDependencies().getArtifactTypes().getByName("jar", artifact -> {
-        artifact.getAttributes().attribute(manipulated, false).attribute(checking, false);
-    });
+    def contents = "{\n\t\"repos\": ${repos},\n\t\"common\": ["
 
-    project.getDependencies().registerTransform(MyTransformChecker) {
-        getFrom().attribute(checking, false);
-        getTo().attribute(checking, true);
+    for (i in 0..<configurations.allImpl.allDependencies.size()) {
+        def dependency = configurations.allImpl.allDependencies[i];
+        contents += """\n\t\t{
+\t\t\t\"groupId\": \"${dependency.group}\",
+\t\t\t\"artifactId\": \"${dependency.name}\",
+\t\t\t\"version\": \"${dependency.version}\",
+\t\t\t\"classifier\": \"${DepUtils.getClassifier(dependency)}\",
+\t\t\t\"type\": \"implementation\"
+\t\t}""" + (i != configurations.allImpl.allDependencies.size() - 1 ? "," : "")
     }
+    contents += "\n\t],\n\t\"client\": ["
 
-    project.getDependencies().registerTransform(MyTransform) {
-        getFrom().attribute(manipulated, false);
-        getTo().attribute(manipulated, true);
+    for (i in 0..<configurations.clientBundle.allDependencies.size()) {
+        def dependency = configurations.clientBundle.allDependencies[i];
+        contents += """\n\t\t{
+\t\t\t\"groupId\": \"${dependency.group}\",
+\t\t\t\"artifactId\": \"${dependency.name}\",
+\t\t\t\"version\": \"${dependency.version}\",
+\t\t\t\"classifier\": \"${DepUtils.getClassifier(dependency)}\",
+\t\t\t\"type\": \"implementation\"
+\t\t}""" + (i != configurations.clientBundle.allDependencies.size() - 1 ? "," : "")
+
+//        System.out.println(dependency.classifier)
     }
+    contents += "\n\t],\n\t\"server\": ["
+    for (i in 0..<configurations.serverBundle.allDependencies.size()) {
+        def dependency = configurations.serverBundle.allDependencies[i];
+        contents += """\n\t\t{
+\t\t\t\"groupId\": \"${dependency.group}\",
+\t\t\t\"artifactId\": \"${dependency.name}\",
+\t\t\t\"version\": \"${dependency.version}\",
+\t\t\t\"classifier\": \"${DepUtils.getClassifier(dependency)}\",
+\t\t\t\"type\": \"implementation\"
+\t\t}""" + (i != configurations.serverBundle.allDependencies.size() - 1 ? "," : "")
+    }
+    contents += "\n\t]"
 
-    project.getConfigurations().all(config -> {
-        if (config.isCanBeResolved()) {
-            config.getAttributes().attribute(manipulated, true);
-            config.getAttributes().attribute(checking, true);
-        }
-    });
-
+    file.write(contents + "\n}")
 }
