@@ -23,7 +23,11 @@
 
     "preInit": "dev.puzzleshq.puzzleloader.zomboid.CommonPuzzleZomboid",
     "init": "dev.puzzleshq.puzzleloader.zomboid.CommonPuzzleZomboid",
-    "postInit": "dev.puzzleshq.puzzleloader.zomboid.CommonPuzzleZomboid"
+    "postInit": "dev.puzzleshq.puzzleloader.zomboid.CommonPuzzleZomboid",
+
+    "server-preInit": "dev.puzzleshq.puzzleloader.zomboid.ServerPuzzleZomboid",
+    "server-init": "dev.puzzleshq.puzzleloader.zomboid.ServerPuzzleZomboid",
+    "server-postInit": "dev.puzzleshq.puzzleloader.zomboid.ServerPuzzleZomboid"
   },
   "mixins": [
     "mixins/puzzle-loader-zomboid.common.mixins.json",

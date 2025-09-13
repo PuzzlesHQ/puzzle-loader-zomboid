@@ -1,14 +1,13 @@
 package dev.puzzleshq.puzzleloader.zomboid;
 
-import dev.puzzleshq.puzzleloader.zomboid.entrypoints.ModInit;
-import dev.puzzleshq.puzzleloader.zomboid.entrypoints.PostModInit;
-import dev.puzzleshq.puzzleloader.zomboid.entrypoints.PreModInit;
+import dev.puzzleshq.puzzleloader.loader.mod.entrypoint.common.ModInit;
+import dev.puzzleshq.puzzleloader.loader.mod.entrypoint.common.PostModInit;
+import dev.puzzleshq.puzzleloader.loader.mod.entrypoint.common.PreModInit;
 
 public class CommonPuzzleZomboid implements PreModInit, ModInit, PostModInit {
 
     @Override
     public void onPreInit() {
-        System.out.println("CommonPuzzleZomboid");
     }
 
     @Override
@@ -17,7 +16,6 @@ public class CommonPuzzleZomboid implements PreModInit, ModInit, PostModInit {
 
     @Override
     public void onPostInit() {
-
     }
 
 }

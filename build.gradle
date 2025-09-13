@@ -66,13 +66,12 @@ configurations {
 
     clientImplementation.extendsFrom(clientInternal)
     serverImplementation.extendsFrom(serverInternal)
-    serverImplementation.extendsFrom(commonBundle)
 
 }
 
 boolean usePuzzleCoreJitpackRelease = true
 
-String jpVersion = "4b83cef837"
+String jpVersion = "79a4fd9a75"
 String centralVersion = "1.1.0-alpha"
 
 String mavenUrl = System.getenv("MAVEN_URL")
@@ -105,9 +104,11 @@ dependencies {
 
     if (usePuzzleCoreJitpackRelease) {
         clientBundle "com.github.PuzzlesHQ:puzzle-loader-core:$jpVersion:client"
+        serverBundle "com.github.PuzzlesHQ:puzzle-loader-core:$jpVersion:server"
         allImpl("com.github.PuzzlesHQ:puzzle-loader-core:$jpVersion:common")
     } else {
         clientBundle "dev.puzzleshq:puzzle-loader-core:$centralVersion:client"
+        serverBundle "dev.puzzleshq:puzzle-loader-core:$centralVersion:server"
         allImpl("dev.puzzleshq:puzzle-loader-core:$centralVersion:common")
     }
 

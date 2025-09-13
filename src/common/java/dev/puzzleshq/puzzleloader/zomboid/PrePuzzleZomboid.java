@@ -1,12 +1,11 @@
 package dev.puzzleshq.puzzleloader.zomboid;
 
-import dev.puzzleshq.puzzleloader.loader.mod.entrypoint.PreLaunchInitializer;
+import dev.puzzleshq.puzzleloader.loader.mod.entrypoint.PreLaunchInit;
 
-public class PrePuzzleZomboid implements PreLaunchInitializer {
+public class PrePuzzleZomboid implements PreLaunchInit {
 
     @Override
     public void onPreLaunch() {
-        System.out.println("PrePuzzleZomboid");
     }
 
 }
