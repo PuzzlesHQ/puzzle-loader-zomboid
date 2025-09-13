@@ -1,8 +1,10 @@
+import dev.puzzleshq.buildsrc.ZomboidUtil
 import groovy.json.JsonSlurper
 import dev.puzzleshq.buildsrc.DepUtils
 import dev.puzzleshq.buildsrc.WidenerPlugin
 import dev.puzzleshq.buildsrc.SteamAppLocator
 import kotlin.text.Charsets
+import org.apache.groovy.json.internal.LazyMap
 
 import java.nio.file.Path
 import java.util.zip.ZipEntry
@@ -70,8 +72,8 @@ configurations {
 
 boolean usePuzzleCoreJitpackRelease = true
 
-String jpVersion = "d367f44256"
-String centralVersion = "1.0.12-alpha"
+String jpVersion = "4b83cef837"
+String centralVersion = "1.1.0-alpha"
 
 String mavenUrl = System.getenv("MAVEN_URL")
 
@@ -126,94 +128,40 @@ dependencies {
     allImplLoader "org.hjson:hjson:$hjson_version"
 
     allImplLoader "org.reflections:reflections:$reflections_version"
-    allImplLoader("net.neoforged:bus:$eventbus_version") {
-        exclude group: "org.apache.logging.log4j", module: "log4j-api"
-    }
+
+//    commonBundle("net.neoforged:bus:$eventbus_version") {
+//        exclude group: "org.apache.logging.log4j", module: "log4j-api"
+//        exclude group: "org.apache.logging.log4j", module: "log4j-core"
+//    }
 
     allImplLoader annotationProcessor("io.github.llamalad7:mixinextras-fabric:$mixin_extras_version")
     allImplLoader("net.fabricmc:sponge-mixin:$mixin_version") {
         exclude group: "com.google.code.gson", module: "gson"
         exclude group: "com.google.guava", module: "guava"
     }
+
     allImplLoader "net.sf.jopt-simple:jopt-simple:$jopt_simple_version"
 
-    commonBundle "com.github.villadora:semver:0.0.3"
-
-    allImplLoader 'org.slf4j:slf4j-ext:1.7.23'
-    allImplLoader 'org.slf4j:slf4j-api:1.7.23'
-    allImplLoader "org.apache.logging.log4j:log4j-api:$slf4j_version"
-    allImplLoader "org.apache.logging.log4j:log4j-core:$slf4j_version"
-    allImplLoader "org.apache.logging.log4j:log4j-slf4j-impl:$slf4j_version"
+    allImplLoader "com.github.villadora:semver:0.0.3"
 }
 
 def projectZomboidAppId = 108600
 def projectZomboidPath = SteamAppLocator.locate(projectZomboidAppId)
 
-convertToJar(new File(projectZomboidPath.toString()))
-
-def convertToJar(File dir) {
-    File f = new File("$projectDir/build/projectZomboid.jar")
-    if (f.exists()) {
-        project.dependencies.clientImplementation(files(f.absolutePath))
-        project.dependencies.commonImplementation(files(f.absolutePath))
-        project.dependencies.serverImplementation(files(f.absolutePath))
-        return;
-    }
-
-    f.createNewFile()
-
-    ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(f))
-    stream.putNextEntry(new ZipEntry("META-INF/MANIFEST.MF"))
-    stream.write("Manifest-Version: 1.0\n".getBytes(Charsets.UTF_8))
-
-    recurse(stream, "", dir)
-    stream.close()
-
-    project.dependencies.clientImplementation(files(f.absolutePath))
-    project.dependencies.commonImplementation(files(f.absolutePath))
-    project.dependencies.serverImplementation(files(f.absolutePath))
-}
-
-def recurse(ZipOutputStream file, String parent, File d) {
-    List<String> exclude = List.of("win", "win64", "jre", "jre64", "launcher", "license", "mods", "pmods", "Workshop")
-    if (d.isDirectory()) {
-        for (final def f in d.listFiles()) {
-//            if (exclude.contains(f.name)) continue;
-//            if (f.name.contains(".dll") || f.name.contains(".jar") || f.name.contains(".bat") || f.name.contains(".exe")) continue;
-            if (f.isDirectory()) {
-                recurse(file, (parent.isEmpty() ? "" : (parent + "/")) + f.getName(), f);
-            } else {
-                if (!f.name.contains(".class")) continue;
-                System.out.println(f)
-                file.putNextEntry(new ZipEntry((parent.isEmpty() ? "" : (parent + "/")) + f.getName()))
-                FileInputStream fis = new FileInputStream(f);
-                file.write(fis.readAllBytes())
-                fis.close()
-            }
-        }
-        return;
-    }
-    file.putNextEntry(new ZipEntry((parent.isEmpty() ? "" : (parent + "/")) + d.getName()))
-    FileInputStream fis = new FileInputStream(d);
-    file.write(fis.readAllBytes())
-    fis.close()
-}
-
 def json = new JsonSlurper().parse(Path.of(projectZomboidPath.toAbsolutePath().toString(), "ProjectZomboid64.json"))
-for (final String file in json.classpath) {
-    if (file == ".") continue
 
-    Path path = projectZomboidPath.toAbsolutePath().resolve(file);
+ZomboidUtil.convertToJar(
+        project,
+        new File("$projectDir/build/projectZomboid.jar"),
+        new File(projectZomboidPath.toAbsolutePath().toString())
+)
 
-    project.dependencies.clientImplementation(files(path.toAbsolutePath()))
-    project.dependencies.commonImplementation(files(path.toAbsolutePath()))
-    project.dependencies.serverImplementation(files(path.toAbsolutePath()))
-
-}
+ZomboidUtil.addClasspath(project, (LazyMap) json, projectZomboidPath)
 
 tasks.register("runClient", JavaExec) {
     classpath += sourceSets.client.runtimeClasspath
     classpath += sourceSets.common.runtimeClasspath
+    classpath += files(projectZomboidPath.toAbsolutePath())
     jvmArgs = json.vmArgs
 
     mainClass = "dev.puzzleshq.puzzleloader.loader.launch.pieces.ClientPiece"
@@ -223,6 +171,7 @@ tasks.register("runClient", JavaExec) {
 tasks.register("runServer", JavaExec) {
     classpath += sourceSets.server.runtimeClasspath
     classpath += sourceSets.common.runtimeClasspath
+    classpath += files(projectZomboidPath.toAbsolutePath())
     jvmArgs = json.vmArgs
 
     mainClass = "dev.puzzleshq.puzzleloader.loader.launch.pieces.ServerPiece"

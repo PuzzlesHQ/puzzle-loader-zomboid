@@ -21,9 +21,9 @@
     "client-init": "dev.puzzleshq.puzzleloader.zomboid.ClientPuzzleZomboid",
     "client-postInit": "dev.puzzleshq.puzzleloader.zomboid.ClientPuzzleZomboid",
 
-    "preInit": "dev.puzzleshq.puzzleloader.zomboid.PuzzleZomboid",
-    "init": "dev.puzzleshq.puzzleloader.zomboid.PuzzleZomboid",
-    "postInit": "dev.puzzleshq.puzzleloader.zomboid.PuzzleZomboid"
+    "preInit": "dev.puzzleshq.puzzleloader.zomboid.CommonPuzzleZomboid",
+    "init": "dev.puzzleshq.puzzleloader.zomboid.CommonPuzzleZomboid",
+    "postInit": "dev.puzzleshq.puzzleloader.zomboid.CommonPuzzleZomboid"
   },
   "mixins": [
     "mixins/puzzle-loader-zomboid.common.mixins.json",
