@@ -13,8 +13,8 @@ public class MixinPreInitClient {
 
     @Inject(method = "main", at = @At("HEAD"))
     private static void main(String[] par1, CallbackInfo ci) {
-        ClientPreModInit.invoke();
         PreModInit.invoke();
+        ClientPreModInit.invoke();
     }
 
 }
