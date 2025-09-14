@@ -1,4 +1,4 @@
-package dev.puzzleshq.buildsrc;
+package dev.puzzleshq.buildsrc.steam;
 
 import java.io.IOException;
 import java.nio.file.Files;

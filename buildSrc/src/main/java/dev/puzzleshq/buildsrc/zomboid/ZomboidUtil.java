@@ -1,8 +1,9 @@
-package dev.puzzleshq.buildsrc;
+package dev.puzzleshq.buildsrc.zomboid;
 
 import kotlin.text.Charsets;
 import org.apache.groovy.json.internal.LazyMap;
 import org.gradle.api.Project;
+import org.gradle.api.file.ConfigurableFileCollection;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -19,14 +20,24 @@ public class ZomboidUtil {
     public static void addClasspath(Project project, LazyMap json, Path zomboidPath) {
         List<Object> classpath = (List<Object>) json.get("classpath");
         for (Object file : classpath) {
-            if (file == ".") continue;
+            if (file.equals(".")) continue;
 
             Path path = zomboidPath.toAbsolutePath().resolve((String) file);
-            Path absPath = path.toAbsolutePath();
+            ConfigurableFileCollection absPath = project.files(path.toAbsolutePath());
 
-            project.getDependencies().add("clientImplementation", project.files(absPath));
-            project.getDependencies().add("commonImplementation", project.files(absPath));
-            project.getDependencies().add("serverImplementation", project.files(absPath));
+            project.getDependencies().add("clientImplementation", absPath);
+            project.getDependencies().add("commonImplementation", absPath);
+            project.getDependencies().add("serverImplementation", absPath);
+        }
+    }
+
+    public static void addJarToDeps(Project project, File jar) {
+        if (jar.exists()) {
+            ConfigurableFileCollection absPath = project.files(jar.getAbsolutePath());
+
+            project.getDependencies().add("clientCompileOnly", absPath);
+            project.getDependencies().add("commonCompileOnly", absPath);
+            project.getDependencies().add("serverCompileOnly", absPath);
         }
     }
 
@@ -35,18 +46,14 @@ public class ZomboidUtil {
             jar.createNewFile();
 
             ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jar));
-            stream.putNextEntry(new ZipEntry("META-INF/MANIFEST.MF"));
-            stream.write("Manifest-Version: 1.0\n".getBytes(Charsets.UTF_8));
-
             recurse(stream, "", dir);
             stream.close();
         }
+        ConfigurableFileCollection absPath = project.files(jar.getAbsolutePath());
 
-        String absPath = jar.getAbsolutePath();
-
-        project.getDependencies().add("clientCompileOnly", project.files(absPath));
-        project.getDependencies().add("commonCompileOnly", project.files(absPath));
-        project.getDependencies().add("serverCompileOnly", project.files(absPath));
+        project.getDependencies().add("clientCompileOnly", absPath);
+        project.getDependencies().add("commonCompileOnly", absPath);
+        project.getDependencies().add("serverCompileOnly", absPath);
     }
 
     private static void addEntry(ZipOutputStream zip, String dir, File file) throws IOException {

@@ -1,4 +1,4 @@
-package dev.puzzleshq.buildsrc;
+package dev.puzzleshq.buildsrc.widen;
 
 import org.gradle.api.artifacts.transform.InputArtifact;
 import org.gradle.api.artifacts.transform.TransformAction;

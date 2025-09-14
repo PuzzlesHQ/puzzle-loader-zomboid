@@ -1,14 +1,6 @@
-import dev.puzzleshq.buildsrc.ZomboidUtil
-import groovy.json.JsonSlurper
+import dev.puzzleshq.buildsrc.zomboid.ZomboidPlugin
 import dev.puzzleshq.buildsrc.DepUtils
-import dev.puzzleshq.buildsrc.WidenerPlugin
-import dev.puzzleshq.buildsrc.SteamAppLocator
-import kotlin.text.Charsets
-import org.apache.groovy.json.internal.LazyMap
-
-import java.nio.file.Path
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
+import dev.puzzleshq.buildsrc.widen.WidenerPlugin
 
 plugins {
     id 'java'
@@ -68,6 +60,7 @@ configurations {
     serverImplementation.extendsFrom(serverInternal)
 
 }
+apply plugin: ZomboidPlugin
 
 boolean usePuzzleCoreJitpackRelease = true
 
@@ -112,6 +105,11 @@ dependencies {
         allImpl("dev.puzzleshq:puzzle-loader-core:$centralVersion:common")
     }
 
+    commonBundle("net.neoforged:bus:$eventbus_version") {
+        exclude group: "org.apache.logging.log4j", module: "log4j-api"
+        exclude group: "org.apache.logging.log4j", module: "log4j-core"
+    }
+
     clientImplementation(sourceSets.common.output)
     serverImplementation(sourceSets.common.output)
 
@@ -130,11 +128,6 @@ dependencies {
 
     allImplLoader "org.reflections:reflections:$reflections_version"
 
-//    commonBundle("net.neoforged:bus:$eventbus_version") {
-//        exclude group: "org.apache.logging.log4j", module: "log4j-api"
-//        exclude group: "org.apache.logging.log4j", module: "log4j-core"
-//    }
-
     allImplLoader annotationProcessor("io.github.llamalad7:mixinextras-fabric:$mixin_extras_version")
     allImplLoader("net.fabricmc:sponge-mixin:$mixin_version") {
         exclude group: "com.google.code.gson", module: "gson"
@@ -144,39 +137,6 @@ dependencies {
     allImplLoader "net.sf.jopt-simple:jopt-simple:$jopt_simple_version"
 
     allImplLoader "com.github.villadora:semver:0.0.3"
-}
-
-def projectZomboidAppId = 108600
-def projectZomboidPath = SteamAppLocator.locate(projectZomboidAppId)
-
-def json = new JsonSlurper().parse(Path.of(projectZomboidPath.toAbsolutePath().toString(), "ProjectZomboid64.json"))
-
-ZomboidUtil.convertToJar(
-        project,
-        new File("$projectDir/build/projectZomboid.jar"),
-        new File(projectZomboidPath.toAbsolutePath().toString())
-)
-
-ZomboidUtil.addClasspath(project, (LazyMap) json, projectZomboidPath)
-
-tasks.register("runClient", JavaExec) {
-    classpath += sourceSets.client.runtimeClasspath
-    classpath += sourceSets.common.runtimeClasspath
-    classpath += files(projectZomboidPath.toAbsolutePath())
-    jvmArgs = json.vmArgs
-
-    mainClass = "dev.puzzleshq.puzzleloader.loader.launch.pieces.ClientPiece"
-    workingDir(projectZomboidPath)
-}
-
-tasks.register("runServer", JavaExec) {
-    classpath += sourceSets.server.runtimeClasspath
-    classpath += sourceSets.common.runtimeClasspath
-    classpath += files(projectZomboidPath.toAbsolutePath())
-    jvmArgs = json.vmArgs
-
-    mainClass = "dev.puzzleshq.puzzleloader.loader.launch.pieces.ServerPiece"
-    workingDir(projectZomboidPath)
 }
 
 java {

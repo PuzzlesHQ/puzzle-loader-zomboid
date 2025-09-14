@@ -3,6 +3,7 @@ package dev.puzzleshq.puzzleloader.zomboid;
 import dev.puzzleshq.puzzleloader.loader.mod.entrypoint.client.ClientModInit;
 import dev.puzzleshq.puzzleloader.loader.mod.entrypoint.client.ClientPostModInit;
 import dev.puzzleshq.puzzleloader.loader.mod.entrypoint.client.ClientPreModInit;
+import zombie.gameStates.ChooseGameInfo;
 
 public class ClientPuzzleZomboid implements ClientPostModInit, ClientModInit, ClientPreModInit {
 

@@ -1,4 +1,4 @@
-package dev.puzzleshq.buildsrc;
+package dev.puzzleshq.buildsrc.widen;
 
 import dev.puzzleshq.accesswriter.AccessWriters;
 import dev.puzzleshq.mod.ModFormats;
