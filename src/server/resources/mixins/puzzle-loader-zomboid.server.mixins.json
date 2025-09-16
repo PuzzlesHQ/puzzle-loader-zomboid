@@ -4,6 +4,7 @@
   "package": "dev.puzzleshq.puzzleloader.zomboid.mixins.server",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "entrypoint.MixinInitServer",
     "entrypoint.MixinPostInitServer",
     "entrypoint.MixinPreInitServer"
   ],

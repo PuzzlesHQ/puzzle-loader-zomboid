@@ -3,6 +3,7 @@ package dev.puzzleshq.buildsrc.zomboid;
 import dev.puzzleshq.buildsrc.steam.SteamAppLocator;
 import dev.puzzleshq.buildsrc.zomboid.tasks.ClientRunTask;
 import dev.puzzleshq.buildsrc.zomboid.tasks.ServerRunTask;
+import dev.puzzleshq.buildsrc.zomboid.tasks.loader.LoaderTasks;
 import groovy.json.JsonSlurper;
 import org.apache.groovy.json.internal.LazyMap;
 import org.gradle.api.Action;
@@ -16,6 +17,7 @@ import org.gradle.api.tasks.TaskContainer;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Map;
 
 public class ZomboidPlugin implements Plugin<Project> {
 
@@ -77,6 +79,12 @@ public class ZomboidPlugin implements Plugin<Project> {
                 gameJar.delete();
             });
         });
+
+        Map<String, ?> properties = target.getProperties();
+
+        if (properties.containsKey("plugin_environment") && properties.get("plugin_environment").equals("loader")) {
+            LoaderTasks.load(taskContainer);
+        }
 
     }
 

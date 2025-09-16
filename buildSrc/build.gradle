@@ -10,6 +10,8 @@ repositories {
 }
 
 dependencies {
+    gradleApi()
+
     implementation "org.ow2.asm:asm:9.8"
     implementation "org.ow2.asm:asm-tree:9.8"
     implementation "org.ow2.asm:asm-util:9.8"
@@ -21,7 +23,7 @@ dependencies {
     implementation "dev.puzzleshq:mod-format-framework:1.0.0"
     implementation "org.hjson:hjson:3.1.0"
 
-    gradleApi()
+    implementation "com.gradleup.shadow:shadow-gradle-plugin:8.3.8"
 }
 
 wrapper {
@@ -29,4 +31,4 @@ wrapper {
     distributionType = Wrapper.DistributionType.ALL
 }
 
-java.toolchain.languageVersion.set(JavaLanguageVersion.of(24))
+java.toolchain.languageVersion.set(JavaLanguageVersion.of(17))
