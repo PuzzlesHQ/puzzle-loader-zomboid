@@ -1,4 +1,4 @@
-package dev.puzzleshq.buildsrc.zomboid.tasks;
+package dev.puzzleshq.buildsrc.zomboid.tasks.modding;
 
 import dev.puzzleshq.buildsrc.zomboid.ZomboidPlugin;
 import org.gradle.api.file.ConfigurableFileCollection;

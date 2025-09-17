@@ -1,14 +1,9 @@
 package dev.puzzleshq.buildsrc.zomboid.tasks.loader;
 
-import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.Project;
-import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.plugins.JavaPluginExtension;
-import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskAction;
 import org.hjson.JsonArray;
 import org.hjson.JsonObject;

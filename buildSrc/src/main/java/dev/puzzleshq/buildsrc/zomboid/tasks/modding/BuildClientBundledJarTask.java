@@ -1,4 +1,4 @@
-package dev.puzzleshq.buildsrc.zomboid.tasks.loader;
+package dev.puzzleshq.buildsrc.zomboid.tasks.modding;
 
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar;
 import org.gradle.api.tasks.SourceSet;
@@ -6,19 +6,22 @@ import org.gradle.api.tasks.SourceSetContainer;
 
 import java.util.ArrayList;
 
-public class BuildCommonJarTask extends ShadowJar {
+public class BuildClientBundledJarTask extends ShadowJar {
 
-    public BuildCommonJarTask() {
+    public BuildClientBundledJarTask() {
         setGroup("zomboid");
         mergeServiceFiles();
         setConfigurations(new ArrayList<>(){{
+            add(getProject().getConfigurations().getByName("clientBundle"));
             add(getProject().getConfigurations().getByName("commonBundle"));
         }});
 
-        getArchiveClassifier().set("common");
+        getArchiveClassifier().set("client-bundle");
         SourceSetContainer extension = getProject().getExtensions().getByType(SourceSetContainer.class);
-        SourceSet sourceSet = extension.getByName("common");
-        from(sourceSet.getOutput());
+        SourceSet sourceSetA = extension.getByName("client");
+        from(sourceSetA.getOutput());
+        SourceSet sourceSetB = extension.getByName("common");
+        from(sourceSetB.getOutput());
     }
 
 }

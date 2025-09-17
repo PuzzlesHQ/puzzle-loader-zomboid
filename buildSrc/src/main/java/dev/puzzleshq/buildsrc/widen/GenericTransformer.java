@@ -11,7 +11,7 @@ import java.util.zip.ZipOutputStream;
 
 public class GenericTransformer {
 
-    public static void transform(File in, File out) throws IOException {
+    public static void transform(File in, File out) {
         try {
             InputStream byteStream = new FileInputStream(in);
             byte[] bytes = byteStream.readAllBytes();
@@ -55,7 +55,10 @@ public class GenericTransformer {
         ClassReader reader = new ClassReader(bytes);
         ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
 
-        reader.accept(new AccessTransformerASM(writer), 0);
+        InterfaceInjector interfaceInjector = new InterfaceInjector(writer);
+        AccessTransformerASM accessTransformer = new AccessTransformerASM(interfaceInjector);
+
+        reader.accept(accessTransformer, 0);
 
         return writer.toByteArray();
     }

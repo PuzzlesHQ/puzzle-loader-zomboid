@@ -3,6 +3,7 @@ package dev.puzzleshq.buildsrc.widen;
 import dev.puzzleshq.accesswriter.AccessWriters;
 import dev.puzzleshq.accesswriter.api.IWriterFormat;
 import dev.puzzleshq.accesswriter.file.ManipulationFile;
+import dev.puzzleshq.mod.ModFormats;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
@@ -10,6 +11,7 @@ import org.gradle.api.attributes.Attribute;
 import org.gradle.api.attributes.AttributesSchema;
 import org.gradle.api.internal.provider.DefaultProperty;
 import org.gradle.api.provider.Property;
+import org.hjson.JsonObject;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -21,6 +23,7 @@ public abstract class WidenerPlugin implements Plugin<Project> {
     Attribute<Boolean> widened = Attribute.of("widened", Boolean.class);
 
     public Property<File> widenerPath = new DefaultProperty<>((e) -> null, File.class);
+    public Property<File> modJsonPath = new DefaultProperty<>((e) -> null, File.class);
 
     @Override
     public void apply(Project target) {
@@ -45,6 +48,22 @@ public abstract class WidenerPlugin implements Plugin<Project> {
 
                     ManipulationFile file = format.parse(s);
                     AccessWriters.MERGED.add(file);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            if (t.modJsonPath.isPresent()) {
+                File path = t.modJsonPath.get();
+                if (!path.exists()) throw new RuntimeException(path + " does not exist!");
+
+                try {
+                    FileInputStream stream = new FileInputStream(path);
+                    String s = new String(stream.readAllBytes());
+                    stream.close();
+
+                    JsonObject object = JsonObject.readHjson(s).asObject();
+                    InterfaceInjector.search(object);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

@@ -42,7 +42,10 @@ public abstract class JarSearcher implements TransformAction<TransformParameters
                 stream1.close();
 
                 ModInfoBuilder builder = new ModInfoBuilder();
-                ModFormats.getFormat(3).parse(builder, JsonObject.readHjson(str).asObject());
+                JsonObject object = JsonObject.readHjson(str).asObject();
+                ModFormats.getFormat(object.getInt("formatVersion", 3))
+                        .parse(builder, object);
+                InterfaceInjector.search(object);
                 for (String accessWriter : builder.getAccessWriters()) {
                     InputStream stream2 = zip.getInputStream(zip.getEntry(accessWriter));
                     String str2 = new String(stream2.readAllBytes());

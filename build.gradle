@@ -18,6 +18,7 @@ apply plugin: WidenerPlugin
 
 widenerPlugin {
     widenerPath.set(file("$projectDir/src/common/resources/puzzle-loader-zomboid.manipulator"))
+    modJsonPath.set(file("$projectDir/src/common/resources/puzzle.mod.json"))
 }
 group = p_group
 version = (ref != null && ref.startsWith("refs/tags/")) ? ref.tokenize('/').last().replaceFirst(/^v/, '') : p_version
@@ -44,14 +45,6 @@ configurations {
     clientImplementation.extendsFrom(allImplLoader)
     commonImplementation.extendsFrom(allImplLoader)
     serverImplementation.extendsFrom(allImplLoader)
-
-    clientBundle
-    commonBundle
-    serverBundle
-
-    clientImplementation.extendsFrom(clientBundle)
-    commonImplementation.extendsFrom(commonBundle)
-    serverImplementation.extendsFrom(serverBundle)
 
     clientInternal
     serverInternal

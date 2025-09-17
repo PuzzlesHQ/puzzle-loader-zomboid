@@ -46,5 +46,10 @@
   },
   "access-writers": [
     "puzzle-loader-zomboid.manipulator"
-  ]
+  ],
+
+  "custom": {
+    "loom:injected_interfaces": {
+    }
+  }
 }

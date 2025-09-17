@@ -1,17 +1,17 @@
 package dev.puzzleshq.buildsrc.zomboid;
 
 import dev.puzzleshq.buildsrc.steam.SteamAppLocator;
-import dev.puzzleshq.buildsrc.zomboid.tasks.ClientRunTask;
-import dev.puzzleshq.buildsrc.zomboid.tasks.ServerRunTask;
+import dev.puzzleshq.buildsrc.zomboid.tasks.modding.ClientRunTask;
+import dev.puzzleshq.buildsrc.zomboid.tasks.modding.ServerRunTask;
+import dev.puzzleshq.buildsrc.zomboid.tasks.configurations.Configurations;
 import dev.puzzleshq.buildsrc.zomboid.tasks.loader.LoaderTasks;
+import dev.puzzleshq.buildsrc.zomboid.tasks.modding.GeneralModdingTasks;
 import groovy.json.JsonSlurper;
 import org.apache.groovy.json.internal.LazyMap;
-import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.file.ConfigurableFileCollection;
-import org.gradle.api.file.SyncSpec;
 import org.gradle.api.tasks.TaskContainer;
 
 import java.io.File;
@@ -26,8 +26,11 @@ public class ZomboidPlugin implements Plugin<Project> {
     public static File gameJar;
     public static LazyMap json;
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     public void apply(Project target) {
+        Configurations.setup(target.getConfigurations());
+
         zomboidPath = SteamAppLocator.locate(steamAppId);
         if (zomboidPath == null) throw new RuntimeException("You must have Project Zomboid installed via Steam");
         zomboidPath = zomboidPath.toAbsolutePath();
@@ -52,37 +55,10 @@ public class ZomboidPlugin implements Plugin<Project> {
         dependencyHandler.add("commonRuntimeOnly", configurableFileCollection);
 
         TaskContainer taskContainer = target.getTasks();
-        taskContainer.register("runClient", ClientRunTask.class);
-        taskContainer.register("runServer", ServerRunTask.class);
-
-        taskContainer.register("generateZomboidJar", task -> {
-            task.setGroup("zomboid");
-
-            task.doLast(task1 -> {
-                try {
-                    ZomboidUtil.convertToJar(
-                            target,
-                            gameJar,
-                            new File(zomboidPath.toString())
-                    );
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-
-        });
-
-        taskContainer.register("deleteZomboidJar", task -> {
-            task.setGroup("zomboid");
-
-            task.doLast(task1 -> {
-                gameJar.delete();
-            });
-        });
-
         Map<String, ?> properties = target.getProperties();
 
-        if (properties.containsKey("plugin_environment") && properties.get("plugin_environment").equals("loader")) {
+        GeneralModdingTasks.load(taskContainer);
+        if (properties.containsKey("modding_environment") && properties.get("modding_environment").equals("loader")) {
             LoaderTasks.load(taskContainer);
         }
 
