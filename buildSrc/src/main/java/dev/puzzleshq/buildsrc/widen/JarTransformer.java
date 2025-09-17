@@ -16,6 +16,12 @@ public abstract class JarTransformer implements TransformAction<TransformParamet
     @InputArtifact
     public abstract Provider<FileSystemLocation> getInputArtifact();
 
+    private static final String[] KNOWN_ANNOYING_JAR_FILES = {
+            "commons-compress-",
+            "javacord-",
+            "sqlite-jdbc-"
+    };
+
     @Override
     public void transform(TransformOutputs outputs) {
         var inp = getInputArtifact().get().getAsFile();
@@ -32,6 +38,18 @@ public abstract class JarTransformer implements TransformAction<TransformParamet
 
             GenericTransformer.transform(inp, out);
         } catch (Exception ignore) {
+            boolean alrErrored = false;
+            for (String knownAnnoyingJarFile : KNOWN_ANNOYING_JAR_FILES) {
+                if (inp.getName().startsWith(knownAnnoyingJarFile)) {
+                    alrErrored = true;
+                    System.out.println("\u001B[33m{COMPATIBILITY_ISSUE(WONT AFFECT MODDING)} Failed to transform file " + inp.getName() + ", defaulting to original bytecode.\u001B[0m");
+                    break;
+                }
+            }
+            if (!alrErrored) {
+                System.out.println("\u001B[31mFailed to transform file " + inp.getName() + ", defaulting to original bytecode.\u001B[0m");
+            }
+
             try {
                 FileOutputStream stream = new FileOutputStream(out);
                 FileInputStream stream1 = new FileInputStream(inp);
