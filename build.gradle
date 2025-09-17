@@ -105,6 +105,9 @@ dependencies {
         allImpl("dev.puzzleshq:puzzle-loader-core:$centralVersion:common")
     }
 
+    commonBundle "org.apache.logging.log4j:log4j-api:$log4j_version"
+    commonBundle "org.apache.logging.log4j:log4j-core:$log4j_version"
+
     commonBundle("net.neoforged:bus:$eventbus_version") {
         exclude group: "org.apache.logging.log4j", module: "log4j-api"
         exclude group: "org.apache.logging.log4j", module: "log4j-core"
@@ -187,8 +190,6 @@ publishing {
             artifactId = p_id
             version = this.version
 
-            from components.java
-
             pom {
                 name = p_name
                 description = p_desc
@@ -235,3 +236,5 @@ wrapper {
     gradleVersion = "8.14"
     distributionType = Wrapper.DistributionType.ALL
 }
+
+java.toolchain.languageVersion.set(JavaLanguageVersion.of(17))

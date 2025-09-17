@@ -7,6 +7,8 @@ import org.gradle.api.artifacts.transform.TransformParameters;
 import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.provider.Provider;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 public abstract class JarTransformer implements TransformAction<TransformParameters.None> {
@@ -29,8 +31,16 @@ public abstract class JarTransformer implements TransformAction<TransformParamet
 //            relocator.run();
 
             GenericTransformer.transform(inp, out);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (Exception ignore) {
+            try {
+                FileOutputStream stream = new FileOutputStream(out);
+                FileInputStream stream1 = new FileInputStream(inp);
+                stream.write(stream1.readAllBytes());
+                stream.close();
+                stream1.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
 
     }
