@@ -9,7 +9,6 @@ plugins {
     id 'jigsaw-project-zomboid'
 
     id 'maven-publish'
-    id("io.github.sgtsilvio.gradle.maven-central-publishing") version "0.4.0"
     id 'com.gradleup.shadow'
 }
 
@@ -136,13 +135,6 @@ publishing {
                 }
             }
         }
-    }
-}
-
-if (ref != null) {
-    signing {
-        useGpgCmd()
-        sign(publishing.publications[0])
     }
 }
 
