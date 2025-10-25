@@ -22,10 +22,8 @@ jigsawGame {
     splitSourceSets()
 }
 
-def ref = System.getenv("GITHUB_REF")
-
 group = p_group
-version = (ref != null && ref.startsWith("refs/tags/")) ? ref.tokenize('/').last().replaceFirst(/^v/, '') : p_version
+version = p_version
 
 jigsawAccess {
     addManipulators(file("$projectDir/src/common/resources/puzzle-loader-zomboid.manipulator"))
@@ -86,7 +84,8 @@ publishing {
     repositories {
         maven {
             name = "PuzzleHQsMaven"
-            url = mavenUrl+ "/" +mavenRepo
+            url = mavenUrl + "/" + mavenRepo
+            allowInsecureProtocol = true
             credentials {
                 username = System.getenv("MAVEN_NAME")
                 password = System.getenv("MAVEN_SECRET")
@@ -95,13 +94,15 @@ publishing {
                 basic(BasicAuthentication)
             }
         }
+        mavenLocal()
     }
 
     publications {
         maven(MavenPublication) {
             groupId = p_group
             artifactId = p_id
-            version = this.version
+
+            from components.java
 
             pom {
                 name = p_name
@@ -111,7 +112,7 @@ publishing {
                 licenses {
                     license {
                         name = "GNU Lesser General Public License"
-                        url = "https://www.gnu.org/licenses/lgpl-2.1.html"
+                        url = "https://www.gnu.org/licenses/lgpl-3.0.html"
                         distribution = "LGPL"
                         comments = "This project includes LGPL-licensed components."
                     }
@@ -123,10 +124,6 @@ publishing {
                         name = 'Mr Zombii'
                         email = 'thezombiigames@gmail.com'
                     }
-                    developer {
-                        id = 'zombi'
-                        name = 'Zombi'
-                    }
                 }
                 scm {
                     connection = "${p_git}.git"
@@ -137,6 +134,7 @@ publishing {
         }
     }
 }
+
 
 static def add(String side, JsonObject o, Configuration configuration, String type) {
     JsonArray array
