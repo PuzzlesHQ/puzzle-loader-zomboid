@@ -8,6 +8,7 @@ public class CommonPuzzleZomboid implements PreModInit, ModInit, PostModInit {
 
     @Override
     public void onPreInit() {
+
     }
 
     @Override

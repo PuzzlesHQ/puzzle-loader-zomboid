@@ -4,9 +4,19 @@ buildscript {
             name "JitPack"
             url "https://jitpack.io"
         }
+        maven {
+            name "Puzzles Releases"
+            url "https://maven.puzzleshq.dev/releases/"
+        }
         mavenCentral()
         gradlePluginPortal()
-        mavenLocal()
+//        mavenLocal()
+    }
+    dependencies {
+        classpath("dev.puzzleshq:jigsaw-suite:1.0.0-beta")
+//        classpath("dev.puzzleshq:jigsaw-suite:1.0.0-beta") {
+//            changing = true
+//        }
     }
 }
 

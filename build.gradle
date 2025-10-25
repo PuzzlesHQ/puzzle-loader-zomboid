@@ -1,12 +1,26 @@
-import dev.puzzleshq.buildsrc.zomboid.ZomboidPlugin
 import dev.puzzleshq.buildsrc.DepUtils
-import dev.puzzleshq.buildsrc.widen.WidenerPlugin
+import org.hjson.JsonArray
+import org.hjson.JsonObject
+import org.hjson.Stringify
 
 plugins {
     id 'java'
+
+    id 'jigsaw-project-zomboid'
+
     id 'maven-publish'
     id("io.github.sgtsilvio.gradle.maven-central-publishing") version "0.4.0"
     id 'com.gradleup.shadow'
+}
+
+configurations {
+    clientImpl
+    serverImpl
+    commonImpl
+}
+
+jigsawGame {
+    splitSourceSets()
 }
 
 def ref = System.getenv("GITHUB_REF")
@@ -14,63 +28,12 @@ def ref = System.getenv("GITHUB_REF")
 group = p_group
 version = (ref != null && ref.startsWith("refs/tags/")) ? ref.tokenize('/').last().replaceFirst(/^v/, '') : p_version
 
-apply plugin: WidenerPlugin
-
-widenerPlugin {
-    widenerPath.set(file("$projectDir/src/common/resources/puzzle-loader-zomboid.manipulator"))
-    modJsonPath.set(file("$projectDir/src/common/resources/puzzle.mod.json"))
-}
-group = p_group
-version = (ref != null && ref.startsWith("refs/tags/")) ? ref.tokenize('/').last().replaceFirst(/^v/, '') : p_version
-
-sourceSets {
-    client
-    common
-    server
+jigsawAccess {
+    addManipulators(file("$projectDir/src/common/resources/puzzle-loader-zomboid.manipulator"))
 }
 
-configurations {
-    allCompileOnly
-
-    clientCompileOnly.extendsFrom(allCompileOnly)
-    commonCompileOnly.extendsFrom(allCompileOnly)
-    serverCompileOnly.extendsFrom(allCompileOnly)
-
-    allImpl
-    clientImplementation.extendsFrom(allImpl)
-    commonImplementation.extendsFrom(allImpl)
-    serverImplementation.extendsFrom(allImpl)
-
-    allImplLoader
-    clientImplementation.extendsFrom(allImplLoader)
-    commonImplementation.extendsFrom(allImplLoader)
-    serverImplementation.extendsFrom(allImplLoader)
-
-    clientInternal
-    serverInternal
-
-    clientImplementation.extendsFrom(clientInternal)
-    serverImplementation.extendsFrom(serverInternal)
-
-}
-apply plugin: ZomboidPlugin
-
-boolean usePuzzleCoreJitpackRelease = true
-
-String jpVersion = "79a4fd9a75"
-String centralVersion = "1.1.0-alpha"
-
-String mavenUrl = System.getenv("MAVEN_URL")
-
-String envRepo = System.getenv("MAVEN_REPO")
-String mavenRepo = envRepo != null ? envRepo : "releases"
-
-java {
-    withJavadocJar()
-    withSourcesJar()
-
-    sourceCompatibility = '17'
-    targetCompatibility = '17'
+jigsawInject {
+    setModJson(file("$projectDir/src/common/resources/puzzle.mod.json"))
 }
 
 repositories {
@@ -80,60 +43,18 @@ repositories {
 }
 
 dependencies {
-    clientCompileOnly "dev.puzzleshq:puzzle-annotations:1.0.0"
-    serverCompileOnly "dev.puzzleshq:puzzle-annotations:1.0.0"
-    commonCompileOnly "dev.puzzleshq:puzzle-annotations:1.0.0"
+    puzzleLoader "dev.puzzleshq:puzzle-loader-core:1.3.4-alpha"
 
-    clientCompileOnly "org.jetbrains:annotations:24.0.0"
-    serverCompileOnly "org.jetbrains:annotations:24.0.0"
-    commonCompileOnly "org.jetbrains:annotations:24.0.0"
-
-    if (usePuzzleCoreJitpackRelease) {
-        clientBundle "com.github.PuzzlesHQ:puzzle-loader-core:$jpVersion:client"
-        serverBundle "com.github.PuzzlesHQ:puzzle-loader-core:$jpVersion:server"
-        allImpl("com.github.PuzzlesHQ:puzzle-loader-core:$jpVersion:common")
-    } else {
-        clientBundle "dev.puzzleshq:puzzle-loader-core:$centralVersion:client"
-        serverBundle "dev.puzzleshq:puzzle-loader-core:$centralVersion:server"
-        allImpl("dev.puzzleshq:puzzle-loader-core:$centralVersion:common")
-    }
-
-    commonBundle "org.apache.logging.log4j:log4j-api:$log4j_version"
-    commonBundle "org.apache.logging.log4j:log4j-core:$log4j_version"
-
-    commonBundle("net.neoforged:bus:$eventbus_version") {
+    commonImpl commonImplementation ("net.neoforged:bus:$eventbus_version") {
         exclude group: "org.apache.logging.log4j", module: "log4j-api"
         exclude group: "org.apache.logging.log4j", module: "log4j-core"
     }
-
-    clientImplementation(sourceSets.common.output)
-    serverImplementation(sourceSets.common.output)
-
-    // loader dependencies
-    allImplLoader "org.ow2.asm:asm:$asm_version"
-    allImplLoader "org.ow2.asm:asm-tree:$asm_version"
-    allImplLoader "org.ow2.asm:asm-util:$asm_version"
-    allImplLoader "org.ow2.asm:asm-analysis:$asm_version"
-    allImplLoader "org.ow2.asm:asm-commons:$asm_version"
-
-    allImplLoader "dev.puzzleshq:puzzle-annotations:1.0.0"
-    allImplLoader "dev.puzzleshq:access-writer:1.0.4+c"
-    allImplLoader "dev.puzzleshq:mod-format-framework:1.1.1"
-
-    allImplLoader "org.hjson:hjson:$hjson_version"
-
-    allImplLoader "org.reflections:reflections:$reflections_version"
-
-    allImplLoader annotationProcessor("io.github.llamalad7:mixinextras-fabric:$mixin_extras_version")
-    allImplLoader("net.fabricmc:sponge-mixin:$mixin_version") {
-        exclude group: "com.google.code.gson", module: "gson"
-        exclude group: "com.google.guava", module: "guava"
-    }
-
-    allImplLoader "net.sf.jopt-simple:jopt-simple:$jopt_simple_version"
-
-    allImplLoader "com.github.villadora:semver:0.0.3"
 }
+
+String mavenUrl = System.getenv("MAVEN_URL")
+
+String envRepo = System.getenv("MAVEN_REPO")
+String mavenRepo = envRepo != null ? envRepo : "releases"
 
 java {
     withJavadocJar()
@@ -223,6 +144,49 @@ if (ref != null) {
         useGpgCmd()
         sign(publishing.publications[0])
     }
+}
+
+static def add(String side, JsonObject o, Configuration configuration, String type) {
+    JsonArray array
+    if (o.get(side) == null) array = new JsonArray()
+    else array = o.get(side).asArray()
+
+    for (final def dep in configuration.allDependencies) {
+        JsonObject object = new JsonObject();
+
+        def classifier = DepUtils.getClassifier(dep);
+        if (classifier != null) object.add("classifier", classifier);
+        object.add("groupId", dep.group);
+        object.add("artifactId", dep.name);
+        object.add("version", dep.version);
+        object.add("type", type);
+        array.add(object)
+    }
+    o.add(side, array)
+}
+
+tasks.register("mkDeps") {
+    File file = new File("$projectDir/dependencies.json")
+
+    JsonObject object = new JsonObject();
+    add("client", object, configurations.clientImpl, "implementation")
+    add("server", object, configurations.serverImpl, "implementation")
+    add("common", object, configurations.commonImpl, "implementation")
+
+    JsonArray repos = new JsonArray()
+    for (i in 0..<project.repositories.size()) {
+        def dependency = project.repositories[i];
+        if (dependency instanceof MavenArtifactRepository) {
+            if (dependency.name == "MavenLocal") continue
+            JsonObject repo = new JsonObject()
+            repo.add("name", dependency.name)
+            repo.add("url", dependency.url.toString())
+            repos.add(repo)
+        }
+    }
+    object.add("repos", repos)
+
+    file.write(object.toString(Stringify.FORMATTED))
 }
 
 wrapper {
