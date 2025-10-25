@@ -10,3 +10,4 @@ gradlew.bat
 
 .gitignore
 dependencies.json
+/gradle/wrapper/gradle-wrapper.jar
