@@ -61,9 +61,15 @@ java {
     targetCompatibility = '17'
 }
 
+tasks.register("publishToPuzzleMaven") {
+    group("jigsaw")
+
+    dependsOn("clean")
+    dependsOn("publishMavenPublicationToPuzzleHQsMavenRepository")
+}
+
 afterEvaluate {
     publishToMavenLocal.dependsOn("clean")
-    publishMavenPublicationToPuzzleHQsMavenRepository.dependsOn("clean")
 }
 
 processCommonResources {
