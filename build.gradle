@@ -61,6 +61,11 @@ java {
     targetCompatibility = '17'
 }
 
+afterEvaluate {
+    publishToMavenLocal.dependsOn("clean")
+    publishMavenPublicationToPuzzleHQsMavenRepository.dependsOn("clean")
+}
+
 processCommonResources {
     def projectProperties = [
             "p_name": p_name,
@@ -102,7 +107,10 @@ publishing {
             groupId = p_group
             artifactId = p_id
 
-            from components.java
+            artifact source: buildClientJar, classifier: 'client', extension: 'jar'
+            artifact source: buildCommonJar, classifier: 'common', extension: 'jar'
+            artifact source: buildServerJar, classifier: 'server', extension: 'jar'
+            artifact source: buildSourcesJar, classifier: 'sources', extension: 'jar'
 
             pom {
                 name = p_name
