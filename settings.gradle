@@ -13,7 +13,7 @@ buildscript {
 //        mavenLocal()
     }
     dependencies {
-        classpath("dev.puzzleshq:jigsaw-suite:1.1.1-beta")
+        classpath("dev.puzzleshq:jigsaw-suite:1.1.2-beta")
 //        classpath("dev.puzzleshq:jigsaw-suite:0.0.0-beta") {
 //            changing = true
 //        }
