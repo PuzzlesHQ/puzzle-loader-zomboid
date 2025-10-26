@@ -1,5 +1,19 @@
 {
-  "latest": {},
-  "existing-phases": [],
-  "versions": {}
+	"latest": {
+		"*": "1.0.0-alpha",
+		"alpha": "1.0.0-alpha"
+	},
+	"existing-phases": [
+		"alpha"
+	],
+	"versions": {
+		"1.0.0-alpha": {
+			"epoch": 1761511687,
+			"date": "2025/10/26T20:48:07",
+			"id": "1.0.0-alpha",
+			"phase": "alpha",
+			"maven-puzzle": "dev.puzzleshq:puzzle-loader-core:1.0.0-alpha",
+			"dependencies": "https://github.com/PuzzlesHQ/puzzle-loader-zomboid/releases/download/1.0.0-alpha/dependencies.json"
+		}
+	}
 }
